@@ -41,18 +41,22 @@ function out = ImpulsiveBipedHalfStance(aux,guess)
 %                       iterations
 %       meshtol - (double) mesh tolerance
 %       snopttol - (double) tolerance for SNOPT
+%       s - (double) smoothing parameter for smoothed absolute value
+%       function
 %   guess - | 'default' | a simple guess, moving at constant speed at leg
 %           height and one body weight of ground reaction force
 %           | 'rand' | guess pulls from random values within variable
 %           bounds at 16 control points
 %           | struct | a previous solution can be used as a guess. It will
 %           be downsampled to 16 evenly spaced control points.
-%
+
+
+% Problem specification:
 %---------------------------------------------------%
 % Symmetrical biped with impulsive contacts:        %
 %---------------------------------------------------%
 % The problem solved here is given as follows:      %
-%   Minimize W = int_0^1 |F.V| dt + 0.5*(Pn)^2      %
+%   Minimize W = int_0^1 |F.V| dt + 0.5*|V0^2 - VTD^2|     %
 % subject to the dynamic constraints                %
 %    l = sqrt(x^2 + y^2)
 %    dx/dt = u;                                     %
@@ -85,9 +89,9 @@ function out = ImpulsiveBipedHalfStance(aux,guess)
 %     J1 = int F*|x*u + y*v|/l dt
 % With the absolute value function partitioned with slack variables
 % The second part is
-%     J2 = |
-% smoothed as
-%  |z|^+ ~ ( z + 2/pi*arctan(z/s) )/2, where 0 < s << 1 is a smoothing parameter
+%     J2 = 0.5*|V0^2 - VTD^2|
+% with the absolute value smoothed as
+%  |z| ~ sqrt(x^2 + s), where 0 < s << 1 is a smoothing parameter
 %
 %---------------------------------------------------%
 
@@ -235,7 +239,6 @@ out   = gpops2(setup);
 end
 
 function phaseout = ImpBipContinuous(input)
-s                 = input.auxdata.s;
 x                 = input.phase.state(:,1);
 y                 = input.phase.state(:,2);
 u                 = input.phase.state(:,3);
@@ -253,7 +256,7 @@ vdot              = F.*y./l - 1;
 z                 = (x.*u + y.*v );
 Power             = F.*z./l;
 phaseout.dynamics = [xdot, ydot, udot, vdot, Fdot];
-phaseout.integrand = [p+q,s(1)*p.*q];
+phaseout.integrand = [p+q,100*p.*q];
 phaseout.path = [lsqr,Power - p + q];
 end
 
@@ -273,7 +276,6 @@ function endout = ImpBipEndpoint(input)
 %    tf = D/U - t_fl
 tf = 2*input.phase.finaltime;
 X0 = input.phase.initialstate;
-%Xf = input.phase.finalstate;
 Pn = input.parameter(1);
 Pp = Pn; % reflect negative impulse
 x0 = X0(1);
@@ -287,6 +289,7 @@ vf = -v0;
 
 l0 = sqrt(x0^2 + y0^2);
 lf = sqrt(xf^2 + yf^2);
+
 % velocities after touchdown, due to negative impulse
 UTD = u0-Pn*x0/l0; 
 VTD = v0-Pn*y0/l0;

@@ -1,19 +1,25 @@
 blankSlate
-aux.D = 2;
+aux.D = 1.2;
 aux.U = 0.3;
+%% Iteration 1
 aux.s = 0.01;
 aux.Fmax = 10;
 aux.Tmin = 0.01;
 aux.Fdotmax = 50;
-
 aux.maxiterations = 1;
-out1 = ImpulsiveBipedHalfStance(aux);
-aux.maxiterations = 8;
-aux.s = 0.01;
-aux.Tmin = 0.01;
+out1 = ImpulsiveBipedHalfStance(aux,'rand');
+
+%% Iteration 2
+aux.s = 0.001;
+aux.snopttol = 1e-8;
+aux.meshtol = 1e-5;
+aux.Tmin = 0.001;
+aux.maxiterations = 1
 out2 = ImpulsiveBipedHalfStance(aux,out1);
 aux.maxiterations = 10;
-aux.s = 0.1;
+%% Iteration 3
+aux.maxiterations = 8;
+aux.s = 0.001;
 aux.Fdotmax = 100;
 aux.snopttol = 1e-8;
 aux.meshtol = 1e-5;
@@ -25,12 +31,7 @@ t = out3.result.solution.phase.time;
 X = out3.result.solution.phase.state;
 U = out3.result.solution.phase.control;
 
-plot(t,X(:,1))
-plot(t,X(:,3:4))
-figure;
-plot(t,X(:,5))
-hold on
-plot(t,U(:,2:3));
+
 plotImpulsiveBipedHalfStance(out3,11)
 
 
