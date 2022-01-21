@@ -1,4 +1,19 @@
-function gaittype = plotImpulsiveBipedHalfStance(GPOPSoutput,n)
+function gaittype = plotImpulsiveBipedHalfStance(GPOPSoutput,N)
+% plotImpulsiveBipedHalfStance plots GPOPS-II outputs from
+% ImpulsiveBipedHalfStance in the sagittal (x,y) plane and returns the
+% gaitType
+% 
+% ----- Useage -----
+% gaittype = plotImpulsiveBipedHalfStance(GPOPSoutput,N) plots the leg and
+%   center of mass at N evenly spaced points in time (from start of stance
+%   to end)
+%
+% ----- Output -----
+% gaittype can be 1, 2 or 3.
+%   1 = Walk
+%   3 = Run
+%   2 = Other
+
 
 o = GPOPSoutput;
 
@@ -13,7 +28,7 @@ X = [X1;X2(2:end,:)];
 F = X(:,5);
 figure('color','w')
 
-tq = linspace(0,t(end),n);
+tq = linspace(0,t(end),N);
 I = find_closest(tq,t);
 
 for i = I

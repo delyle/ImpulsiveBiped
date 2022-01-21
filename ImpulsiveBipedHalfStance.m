@@ -3,7 +3,7 @@ function out = ImpulsiveBipedHalfStance(aux,guess)
 % and Ruina 2006 (Nature), using GPOPS-II
 %
 % The optimal control problem is to determine the work-minimizing
-% symmetrical bipedal gait for a given stride length (D) and average speed
+% symmetrical bipedal gait for a given step length (D) and average speed
 % (U). All variables are normalized to leg length, body mass, and
 % gravitational acceleration.
 %
@@ -30,7 +30,7 @@ function out = ImpulsiveBipedHalfStance(aux,guess)
 %   aux - a struct containing parameters for the model and optimization.
 %         Parameters are given as fields
 %       --Parameters--
-%       D - (double) stride length
+%       D - (double) step length
 %       U - (double) Average horizontal speed
 %       Fmax - (double) Maximum leg-axial ground reaction force during 
 %              stance 
@@ -39,10 +39,11 @@ function out = ImpulsiveBipedHalfStance(aux,guess)
 %       
 %       maxiterations - (integer: default 10) maximum number of mesh 
 %                       iterations
-%       meshtol - (double) mesh tolerance
-%       snopttol - (double) tolerance for SNOPT
+%       meshtol - (double: default 1e-7) mesh tolerance
+%       snopttol - (double: default 1e-6) tolerance for SNOPT
 %       s - (double) smoothing parameter for smoothed absolute value
 %       function
+%       Tmin - (double) minimum stance time
 %   guess - | 'default' | a simple guess, moving at constant speed at leg
 %           height and one body weight of ground reaction force
 %           | 'rand' | guess pulls from random values within variable
@@ -108,7 +109,7 @@ U = aux.U;
 
 % Bounds on time
 t0 = 0; % time must start at 0
-tfmin = aux.Tmin; tfmax = D/U/2; % stance time can last as long as half a stride time
+tfmin = aux.Tmin; tfmax = D/U/2; % stance time can last as long as half a step time
 bounds.phase.initialtime.lower = t0;
 bounds.phase.initialtime.upper = t0; 
 bounds.phase.finaltime.lower = tfmin;
@@ -158,8 +159,8 @@ bounds.phase.path.upper = [1,0];
 
 % Bounds on endpoint events. These are
 % [Time of flight, ...
-%  simulated stride length - given stride length, ..
-%  simulated stride time - given time
+%  simulated step length - given step length, ..
+%  simulated step time - given time
 bounds.eventgroup.lower = zeros(1,3);
 bounds.eventgroup.upper = [D/U, zeros(1,2)];
 
