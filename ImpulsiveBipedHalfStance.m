@@ -37,7 +37,8 @@ function out = ImpulsiveBipedHalfStance(aux,guess)
 %       Fdotmax - (double) Maximum rate of change of ground reaction force
 %                 during stance
 %       
-%       maxiterations - (integer) maximum number of mesh iterations
+%       maxiterations - (integer: default 10) maximum number of mesh 
+%                       iterations
 %       meshtol - (double) mesh tolerance
 %       snopttol - (double) tolerance for SNOPT
 %   guess - | 'default' | a simple guess, moving at constant speed at leg
@@ -110,40 +111,59 @@ bounds.phase.finaltime.lower = tfmin;
 bounds.phase.finaltime.upper = tfmax;
 
 % Bounds on states. States are:
+% [x, y, u, v, F]
 % x, y - horizontal and vertical position of the center of mass
+% u, v - horizontal and vertical velocity of the center of mass
 % F - pushing force along leg
 
-
 x0min = -1; % Can't start stance more than a leg length away
-x0max = 0; % Can't start 
-xmin = -1; ymin = 0;
+x0max = 0; % Can't start past midstance
+xmin = -1; ymin = 0; 
 umin = -Inf; vmin = -Inf;
 xmax = 0; ymax = 1;
 umax = Inf; vmax = Inf;
 xfmin = 0; xfmax = 0;
-
-Fmin = 0; Fmax = aux.Fmax;
-Fdotmin = -aux.Fdotmax; Fdotmax = aux.Fdotmax;
-
-
+Fmin = 0; Fmax = aux.Fmax; % Forces must be pushing (no suction)
 bounds.phase.initialstate.lower = [x0min,ymin,umin,vmin,Fmin];
 bounds.phase.initialstate.upper = [x0max,ymax,umax,vmax,Fmax];
 bounds.phase.state.lower = [xmin,ymin,umin,vmin,Fmin];
 bounds.phase.state.upper = [xmax,ymax,umax,vmax,Fmax];
 bounds.phase.finalstate.lower = [xfmin,ymin,umin,0,Fmin];
 bounds.phase.finalstate.upper = [xfmax,ymax,umax,0,Fmax];
+
+% Bounds on controls. Controls are:
+% [Fdot, p, q]
+% Fdot - time derivative of force
+% p, q - positive and negative parts of power (slack variables)
+
+Fdotmin = -aux.Fdotmax; Fdotmax = aux.Fdotmax;
 bounds.phase.control.lower = [Fdotmin,0,0];
 bounds.phase.control.upper = [Fdotmax,Fmax*U,Fmax*U];
 bounds.phase.integral.lower = [0 0];
 bounds.phase.integral.upper = [Inf Inf];
 
+% Bounds on parameters. Parameter is:
+% Pn - negative impulse at touchdown
 bounds.parameter.lower = 0;
 bounds.parameter.upper = Inf;
 
-bounds.phase.path.lower = [0,0]; % [leg length constraint,slacks]
+% Bounds on path constraints. These are
+% [leg length^2, Power - p + q]
+bounds.phase.path.lower = [0,0]; 
 bounds.phase.path.upper = [1,0];
+
+% Bounds on endpoint events. These are
+% [Tflight, 
+%   
 bounds.eventgroup.lower = zeros(1,6);
 bounds.eventgroup.upper = [D/U, zeros(1,5)];
+
+endout.eventgroup.event = t_fl;
+endout.eventgroup.event(1,2) = VTO - VTD - t_fl;
+endout.eventgroup.event(3) = xf - x0 + UTO*t_fl - D;
+yl = yf + VTO*t_fl -1/2*t_fl^2;% The height at landing from takeoff
+endout.eventgroup.event(5) = y0 - yl;
+endout.eventgroup.event(6) = tf + t_fl - D/U;
 
 %-------------------------------------------------------------------------%
 %---------------------- Provide Guess of Solution ------------------------%
@@ -211,7 +231,6 @@ if isfield(aux,'snopttol')
     setup.nlp.snoptoptions.tolerance = aux.snopttol;
 end
 setup.derivatives.supplier        = 'sparseCD';
-%setup.derivatives.supplier        = 'adigator';
 setup.derivatives.derivativelevel = 'first';
 setup.method                      = 'RPM-Integration';
 
@@ -231,17 +250,17 @@ F                 = input.phase.state(:,5);
 Fdot              = input.phase.control(:,1);
 p                 = input.phase.control(:,2);
 q                 = input.phase.control(:,3);
-l                 = sqrt(x.^2 + y.^2);
+lsqr              = x.^2 + y.^2;
+l                 = sqrt(lsqr);
 xdot              = u;
 ydot              = v;
 udot              = F.*x./l;
 vdot              = F.*y./l - 1;
 z                 = (x.*u + y.*v );
-%z_subplus         = ( z + z.*tanh(z/s) )/2;%(z + sqrt(z.^2 + s))/2;%
 Power             = F.*z./l;
 phaseout.dynamics = [xdot, ydot, udot, vdot, Fdot];
 phaseout.integrand = [p+q,s(1)*p.*q];
-phaseout.path = [l,Power - p + q];
+phaseout.path = [lsqr,Power - p + q];
 end
 
 function endout = ImpBipEndpoint(input)
@@ -285,7 +304,7 @@ D = input.auxdata.D;
 U = input.auxdata.U;
 
 endout.eventgroup.event = t_fl;
-endout.eventgroup.event(1,2) = VTO - VTD - t_fl;
+endout.eventgroup.event(1,2) = VTO - VTD - t_fl; % note that g = 1
 endout.eventgroup.event(3) = xf - x0 + UTO*t_fl - D;
 yl = yf + VTO*t_fl -1/2*t_fl^2;% The height at landing from takeoff
 endout.eventgroup.event(5) = y0 - yl;
