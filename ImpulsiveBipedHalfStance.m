@@ -1,14 +1,61 @@
-function out = ImpBipOptSmoothFHalfStance(aux,guess)
-
+function out = ImpulsiveBipedHalfStance(aux,guess)
+% Optimal bipedal locomotion with Symmetrical contacts, based on Srinivasan
+% and Ruina 2006 (Nature), using GPOPS-II
+%
+% The optimal control problem is to determine the work-minimizing
+% symmetrical bipedal gait for a given stride length (D) and average speed
+% (U). All variables are normalized to leg length, body mass, and
+% gravitational acceleration.
+%
+% The problem starts with contact after flight phase, with an impulsive
+% contact. Stance is simulated until midstance, and the behaviour is
+% reflected (in reverse) through the rest of stance and the next flight
+% phase.
+%
+% The objective is regularized by penalizing rapid changes in force. The
+% level of regularization can be adjusted with aux.FdotMax (see below)
+% 
+% --------------------------------------------------%
+% Useage
+% --------------------------------------------------%
+%   out = ImpulsiveBipedHalfStance(aux) returns GPOPS output with a default
+%   guess, given auxdata
+%   
+%   out = ImpulsiveBipedHalfStance(aux,guess) returns GPOPS output with
+%   guess given by string input
+%
+% --------------------------------------------------%
+% User inputs
+% --------------------------------------------------%
+%   aux - a struct containing parameters for the model and optimization.
+%         Parameters are given as fields
+%       --Parameters--
+%       D - (double) stride length
+%       U - (double) Average horizontal speed
+%       Fmax - (double) Maximum leg-axial ground reaction force during 
+%              stance 
+%       Fdotmax - (double) Maximum rate of change of ground reaction force
+%                 during stance
+%       
+%       maxiterations - (integer) maximum number of mesh iterations
+%       meshtol - (double) mesh tolerance
+%       snopttol - (double) tolerance for SNOPT
+%   guess - | 'default' | a simple guess, moving at constant speed at leg
+%           height and one body weight of ground reaction force
+%           | 'rand' | guess pulls from random values within variable
+%           bounds at 16 control points
+%           | struct | a previous solution can be used as a guess. It will
+%           be downsampled to 16 evenly spaced control points.
+%
 %---------------------------------------------------%
-% Symmetrical biped with impulsive contacts:                %
+% Symmetrical biped with impulsive contacts:        %
 %---------------------------------------------------%
 % The problem solved here is given as follows:      %
-%   Minimize W = int_0^1 |F.V|^+ dt + 0.5*Pp^2      %
+%   Minimize W = int_0^1 |F.V| dt + 0.5*(Pn)^2      %
 % subject to the dynamic constraints                %
 %    l = sqrt(x^2 + y^2)
-%    dx/dt = u;                               %
-%    du/dt = F(t)*x/l;                               %
+%    dx/dt = u;                                     %
+%    du/dt = F(t)*x/l;                              %
 %    dy/dt = v;
 %    dv/dt = F(t)*y/l - 1;
 % through contacts where
@@ -33,19 +80,42 @@ function out = ImpBipOptSmoothFHalfStance(aux,guess)
 %    y > 0
 % The control bounds are
 %    F > 0
-% The integrand of the objective is
-%      F*|x*u + y*v|^+/l
+% The first part of the objective is
+%     J1 = int F*|x*u + y*v|/l dt
+% With the absolute value function partitioned with slack variables
+% The second part is
+%     J2 = |
 % smoothed as
 %  |z|^+ ~ ( z + 2/pi*arctan(z/s) )/2, where 0 < s << 1 is a smoothing parameter
 %
 %---------------------------------------------------%
 
-D = aux.D;
+if nargin < 2
+    guess = 'default';
+end
+
+D = aux.D; 
 U = aux.U;
-t0 = 0;
-tfmin = aux.Tmin; tfmax = D/U/2;
-x0min = -1;
-x0max = 0;
+
+%-------------------------------------------------------------------------%
+%----------------------- Setup for Problem Bounds ------------------------%
+%-------------------------------------------------------------------------%
+
+% Bounds on time
+t0 = 0; % time must start at 0
+tfmin = aux.Tmin; tfmax = D/U/2; % stance time can last as long as half a stride time
+bounds.phase.initialtime.lower = t0;
+bounds.phase.initialtime.upper = t0; 
+bounds.phase.finaltime.lower = tfmin;
+bounds.phase.finaltime.upper = tfmax;
+
+% Bounds on states. States are:
+% x, y - horizontal and vertical position of the center of mass
+% F - pushing force along leg
+
+
+x0min = -1; % Can't start stance more than a leg length away
+x0max = 0; % Can't start 
 xmin = -1; ymin = 0;
 umin = -Inf; vmin = -Inf;
 xmax = 0; ymax = 1;
@@ -55,13 +125,7 @@ xfmin = 0; xfmax = 0;
 Fmin = 0; Fmax = aux.Fmax;
 Fdotmin = -aux.Fdotmax; Fdotmax = aux.Fdotmax;
 
-%-------------------------------------------------------------------------%
-%----------------------- Setup for Problem Bounds ------------------------%
-%-------------------------------------------------------------------------%
-bounds.phase.initialtime.lower = t0;
-bounds.phase.initialtime.upper = t0;
-bounds.phase.finaltime.lower = tfmin;
-bounds.phase.finaltime.upper = tfmax;
+
 bounds.phase.initialstate.lower = [x0min,ymin,umin,vmin,Fmin];
 bounds.phase.initialstate.upper = [x0max,ymax,umax,vmax,Fmax];
 bounds.phase.state.lower = [xmin,ymin,umin,vmin,Fmin];
@@ -84,9 +148,6 @@ bounds.eventgroup.upper = [D/U, zeros(1,5)];
 %-------------------------------------------------------------------------%
 %---------------------- Provide Guess of Solution ------------------------%
 %-------------------------------------------------------------------------%
-if ~isfield(aux,'guess')
-    aux.guess = 'default';
-end
 
 if ischar(guess)
     s = lower(guess);
@@ -94,7 +155,7 @@ if ischar(guess)
     switch s
         case 'default'    
             guess.phase.time    = [0;tfmin];
-            guess.phase.state   = [[0; 0],[1; 1],[U;U],[-1; 1],[Fmax;Fmax]];
+            guess.phase.state   = [[-D/2; 0],[1; 1],[U;U],[-1; 1],[1;1]];
             guess.phase.control = [0 0 0; 0 0 0];
             guess.phase.integral = [0 0];
             guess.parameter = 1;

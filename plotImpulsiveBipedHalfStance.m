@@ -1,4 +1,4 @@
-function gaittype = plotImpBipHalfStance(GPOPSoutput,n)
+function gaittype = plotImpulsiveBipedHalfStance(GPOPSoutput,n)
 
 o = GPOPSoutput;
 
