@@ -153,17 +153,11 @@ bounds.phase.path.lower = [0,0];
 bounds.phase.path.upper = [1,0];
 
 % Bounds on endpoint events. These are
-% [Tflight, 
-%   
-bounds.eventgroup.lower = zeros(1,6);
-bounds.eventgroup.upper = [D/U, zeros(1,5)];
-
-endout.eventgroup.event = t_fl;
-endout.eventgroup.event(1,2) = VTO - VTD - t_fl;
-endout.eventgroup.event(3) = xf - x0 + UTO*t_fl - D;
-yl = yf + VTO*t_fl -1/2*t_fl^2;% The height at landing from takeoff
-endout.eventgroup.event(5) = y0 - yl;
-endout.eventgroup.event(6) = tf + t_fl - D/U;
+% [Time of flight, ...
+%  simulated stride length - given stride length, ..
+%  simulated stride time - given time
+bounds.eventgroup.lower = zeros(1,3);
+bounds.eventgroup.upper = [D/U, zeros(1,2)];
 
 %-------------------------------------------------------------------------%
 %---------------------- Provide Guess of Solution ------------------------%
@@ -281,7 +275,7 @@ tf = 2*input.phase.finaltime;
 X0 = input.phase.initialstate;
 %Xf = input.phase.finalstate;
 Pn = input.parameter(1);
-Pp = Pn;
+Pp = Pn; % reflect negative impulse
 x0 = X0(1);
 y0 = X0(2);
 u0 = X0(3);
@@ -293,22 +287,20 @@ vf = -v0;
 
 l0 = sqrt(x0^2 + y0^2);
 lf = sqrt(xf^2 + yf^2);
-UTD = u0-Pn*x0/l0;
+% velocities after touchdown, due to negative impulse
+UTD = u0-Pn*x0/l0; 
 VTD = v0-Pn*y0/l0;
 UTO = uf+Pp*xf/lf;
 VTO = vf+Pp*yf/lf;
 
-t_fl = VTO - VTD;
+t_fl = VTO - VTD; % flight time. Note that g = 1
 
 D = input.auxdata.D;
 U = input.auxdata.U;
 
 endout.eventgroup.event = t_fl;
-endout.eventgroup.event(1,2) = VTO - VTD - t_fl; % note that g = 1
-endout.eventgroup.event(3) = xf - x0 + UTO*t_fl - D;
-yl = yf + VTO*t_fl -1/2*t_fl^2;% The height at landing from takeoff
-endout.eventgroup.event(5) = y0 - yl;
-endout.eventgroup.event(6) = tf + t_fl - D/U;
+endout.eventgroup.event(2) = xf - x0 + UTO*t_fl - D;
+endout.eventgroup.event(3) = tf + t_fl - D/U;
 En = UTD^2 + VTD^2;
 E0 = u0^2 + v0^2;
 s = input.auxdata.s;

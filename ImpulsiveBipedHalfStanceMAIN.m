@@ -1,6 +1,6 @@
 blankSlate
-aux.D = 1.5;
-aux.U = 0.5;
+aux.D = 2;
+aux.U = 0.3;
 aux.s = 0.01;
 aux.Fmax = 10;
 aux.Tmin = 0.01;
