@@ -300,9 +300,10 @@ t_fl = VTO - VTD; % flight time. Note that g = 1
 D = input.auxdata.D;
 U = input.auxdata.U;
 
-endout.eventgroup.event = t_fl;
-endout.eventgroup.event(2) = xf - x0 + UTO*t_fl - D;
-endout.eventgroup.event(3) = tf + t_fl - D/U;
+endout.eventgroup.event = t_fl; % flight time cannot exceed stance time
+endout.eventgroup.event(2) = ...
+    xf - x0 + UTO*t_fl - D; % simulated length is equal to step length
+endout.eventgroup.event(3) = tf + t_fl - D/U; % simulated time is step time
 En = UTD^2 + VTD^2;
 E0 = u0^2 + v0^2;
 s = input.auxdata.s;
