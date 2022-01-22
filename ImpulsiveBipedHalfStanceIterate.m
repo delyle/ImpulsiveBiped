@@ -59,6 +59,7 @@ auxFinal.D = D;
 
 %% Iteration 1
 aux = auxFinal; % use most of the input values
+aux.s = 0.1;
 aux.maxiterations = 1;
 out1 = ImpulsiveBipedHalfStance(aux,guess);
 
@@ -68,6 +69,7 @@ out2 = ImpulsiveBipedHalfStance(aux,out1);
 
 
 %% Iteration 3
+aux.s = auxFinal.s;
 aux.maxiterations = auxFinal.maxiterations;
 outFinal = ImpulsiveBipedHalfStance(aux,out2);
 end
