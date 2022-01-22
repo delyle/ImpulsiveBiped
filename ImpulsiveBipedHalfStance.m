@@ -12,8 +12,6 @@ function out = ImpulsiveBipedHalfStance(aux,guess)
 % reflected (in reverse) through the rest of stance and the next flight
 % phase.
 %
-% The objective is regularized by penalizing rapid changes in force. The
-% level of regularization can be adjusted with aux.FdotMax (see below)
 % 
 % --------------------------------------------------%
 % Useage
