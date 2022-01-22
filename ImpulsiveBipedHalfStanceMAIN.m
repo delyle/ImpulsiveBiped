@@ -1,7 +1,7 @@
 clear; close all;
 
-D = 1;
-U = 1;
+D = 1.2;
+U = 0.5; 
 
 % solve the problem
 out3 = ImpulsiveBipedHalfStanceIterate(U,D);

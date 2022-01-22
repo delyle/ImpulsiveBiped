@@ -152,15 +152,14 @@ bounds.parameter.upper = Inf;
 
 % Bounds on path constraints. These are
 % [leg length^2, Power - p + q]
-bounds.phase.path.lower = [0,0]; 
-bounds.phase.path.upper = [1,0];
+bounds.phase.path.lower = [0, 0]; 
+bounds.phase.path.upper = [1, 0];
 
 % Bounds on endpoint events. These are
-% [Time of flight, ...
-%  simulated step length - given step length, ..
-%  simulated step time - given time
-bounds.eventgroup.lower = zeros(1,3);
-bounds.eventgroup.upper = [D/U, zeros(1,2)];
+% [simulated step length - given step length, ..
+%  simulated step time - given time]
+bounds.eventgroup.lower = [0, 0];
+bounds.eventgroup.upper = [0, 0];
 
 %-------------------------------------------------------------------------%
 %---------------------- Provide Guess of Solution ------------------------%
@@ -267,7 +266,7 @@ function endout = ImpBipEndpoint(input)
 % absolute (negative) impulse just after contact
 % The problem is technically single phase, but an implicit flight phase is
 % included.
-% The endpoint conditions are                     %
+% The endpoint conditions are                     
 %    t_fl = (vf - v0);
 %    vf >= v0
 %    xf - x0 + uf*t_fl = D
@@ -300,10 +299,9 @@ t_fl = VTO - VTD; % flight time. Note that g = 1
 D = input.auxdata.D;
 U = input.auxdata.U;
 
-endout.eventgroup.event = t_fl; % flight time cannot exceed stance time
-endout.eventgroup.event(2) = ...
+endout.eventgroup.event(1) = ...
     xf - x0 + UTO*t_fl - D; % simulated length is equal to step length
-endout.eventgroup.event(3) = tf + t_fl - D/U; % simulated time is step time
+endout.eventgroup.event(2) = tf + t_fl - D/U; % simulated time is step time
 En = UTD^2 + VTD^2;
 E0 = u0^2 + v0^2;
 s = input.auxdata.s;
