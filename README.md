@@ -15,7 +15,7 @@ phase.
 
 ## Dependencies
 
-The optimization requires [GPOPS-II](https://www.gpops2.com/) and has been tested on MATLAB 2019a.
+The optimization requires [GPOPS-II](https://www.gpops2.com/) and [SNOPT](https://ccom.ucsd.edu/~optimizers/solvers/snopt/) and has been tested on MATLAB 2019a.
 
 ## Simple useage
 
