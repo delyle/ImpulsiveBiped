@@ -18,23 +18,27 @@ phase.
 
 The optimization requires [GPOPS-II](https://www.gpops2.com/) and [SNOPT](https://ccom.ucsd.edu/~optimizers/solvers/snopt/) and has been tested on MATLAB 2019a.
 
-## Simple useage
+## Basic useage
 
 The script `ImpulsiveBipedHalfStanceMAIN` shows basic functionality. More specific documentation for various functions can be found by typing `help {functionName}` in the MATLAB terminal.
 
 ### Examples
 
+#### Default guess
+
 To find an optimal solution at nondimensional speeds of $U = 0.5$ and $D = 0.4$ from a simple guess, call 
 
     out = ImpulsiveBipedHalfStanceIterate(0.5,0.4,'default');
 
-Typing
-
-    plotImpulsiveBipedHalfStance(out,'TextLocation','Outside');
+Calling
+            
+            plotImpulsiveBipedHalfStance(out,'TextLocation','Outside');
     
-Results in this figure ![A pendular walk](D-0p4_U-0p5.png) showing a pendular walk, as expected.
+results in this figure ![A pendular walk](Plots/D-0p4_U-0p5.png) showing a pendular walk, as expected.
 
-To use a random guess, try
+#### Random Guess
+
+To use a random initial guess, try
 
     out = ImpulsiveBipedHalfStanceIterate(0.5,1.2,'rand');
 
@@ -42,7 +46,7 @@ Plot the solution with higher time resolution in the plot. Set the number of plo
 
     plotImpulsiveBipedHalfStance(out,21);
     
-As the problem is non-convex, a number of alternative solutions will emerge. Some examples:
+As the problem is non-convex, a number of alternative solutions will emerge. Some examples at $U = 0.6$, $D = 1.2$:
 
-
-
+![A pendular run](Plots/D-1p2_U-0p6_sol1.png)
+![A skip-like gait](Plots/D-1p2_U-0p6_sol2.png)

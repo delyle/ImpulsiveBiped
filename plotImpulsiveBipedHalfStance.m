@@ -25,6 +25,10 @@ function gaittype = plotImpulsiveBipedHalfStance(GPOPSoutput,varargin)
 %   0.01 (default) | scalar double < 1
 %   Minimum value, in body weights, for plotting the legs
 % 
+% 'ImpulseTolerance' - minimum impulse to plot leg at start and end of
+% stance
+%   0.01 (default) | scalar double < 1
+%   Minimum value, in fraction of average horizontal speed (U)
 %
 % ----- Output -----
 % gaittype can be 1, 2 or 3.
@@ -46,10 +50,13 @@ parse(p,GPOPSoutput,varargin{:})
 
 TextLocation = upper(p.Results.TextLocation);
 N = p.Results.N;
+ForceTolerance = p.Results.ForceTolerance;
+ImpulseTolerance = p.Results.ImpulseTolerance;
 
 o = GPOPSoutput;
 aux = o.result.setup.auxdata;
 D = aux.D;
+U = aux.U;
 
 t1 = o.result.interpsolution.phase.time; % time for the first half of stance
 t2 = t1(end)+abs(t1(end)-flipud(t1)); % time for the second half
@@ -66,11 +73,19 @@ tq = linspace(0,t(end),N);
 I = find_closest(tq,t);
 for ii = 0:1
     X(:,1) = X(:,1) + ii*D;
+    Pn = o.result.solution.parameter;
+    Pp = Pn;
+    
     for i = I
         plot(X(i,1),X(i,2),'ro','markersize',10)
         hold on
-        if F(i) > 0.01
+        if F(i) > ForceTolerance
             plot([ii*D X(i,1)],[0 X(i,2)],'b-')
+        end
+        if i == I(1) || i == I(end)
+            if Pn > U*ImpulseTolerance
+                plot([ii*D X(i,1)],[0 X(i,2)],'b-','linewidth',1.5)
+            end
         end
     end
     x0 = X(1,1);
@@ -79,19 +94,21 @@ for ii = 0:1
     yf = X(end,2);
     l0 = sqrt((x0-ii*D)^2 + y0^2);
     lf = sqrt((xf-ii*D)^2 + yf^2);
+    v0 = X(1,4);
     [uf, vf] = deal(X(end,3),X(end,4));
     
     
-    Pn = o.result.solution.parameter;
-    Pp = Pn;
+
     
     
-    T_fl = (2*Pn)*y0/l0; % equivalent to -(v0 - Pn*y0/l0) + (vf + Pp*yf/lf);
+    T_fl = -(v0 - Pn*y0/l0) + (vf + Pp*yf/lf);
     t_fl = linspace(0,T_fl);
     x_fl = xf + (uf+Pp*(xf-ii*D)/lf)*t_fl;
     y_fl = yf + (vf+Pp*yf/lf)*t_fl - 1/2*t_fl.^2;
     plot(x_fl,y_fl,'k--')
 end
+
+Work = 2*(o.result.objective-o.result.solution.phase.integral(2));
 
 yl = ylim;
 
@@ -114,7 +131,8 @@ end
 textToDisplay = ['U = ',num2str(aux.U),', D = ',num2str(aux.D),newline,...
                  'Stance time ',num2str(aux.D/aux.U - T_fl),newline,...
                  'Flight time ',num2str(T_fl),newline,...
-                 'Stance length ',num2str(xf-x0)];
+                 'Stance length ',num2str(xf-x0),newline,...
+                 'Total work ',num2str(Work,3)];             
 
 text(TextX,0.05,textToDisplay,'units','normalized','horizontalalignment',horAlignment,'verticalalignment','bottom')
 
@@ -124,6 +142,7 @@ elseif T_fl*aux.U/aux.D > 0.99
     gaittype = 3;
 else
     gaittype = 2;
+end
 end
 
 function Idx = find_closest(xq,x,max_indices)
