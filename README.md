@@ -26,7 +26,7 @@ The script `ImpulsiveBipedHalfStanceMAIN` shows basic functionality. More specif
 
 #### Default guess
 
-To find an optimal solution at nondimensional speeds of $U = 0.5$ and $D = 0.4$ from a simple guess, call 
+To find an optimal solution at nondimensional speeds of U = 0.5 and D = 0.4 from a simple guess, call 
 
     out = ImpulsiveBipedHalfStanceIterate(0.5,0.4,'default');
 
@@ -34,7 +34,11 @@ Calling
             
             plotImpulsiveBipedHalfStance(out,'TextLocation','Outside');
     
-results in this figure ![A pendular walk](Plots/D-0p4_U-0p5.png) showing a pendular walk, as expected.
+results in this figure 
+
+<img src="Plots/D-0p4_U-0p5.png" alt="A pendular walk" width=400/>
+
+showing a pendular walk, as expected.
 
 #### Random Guess
 
@@ -46,7 +50,9 @@ Plot the solution with higher time resolution in the plot. Set the number of plo
 
     plotImpulsiveBipedHalfStance(out,21);
     
-As the problem is non-convex, a number of alternative solutions will emerge. Some examples at $U = 0.6$, $D = 1.2$:
+As the problem is non-convex, a number of alternative solutions will emerge. Some examples at U = 0.6, D = 1.2:
 
-![A pendular run](Plots/D-1p2_U-0p6_sol1.png)
-![A skip-like gait](Plots/D-1p2_U-0p6_sol2.png)
+<img src="Plots/D-1p2_U-0p6_sol1.png" alt="A pendular run" width=300/>
+<img src="Plots/D-1p2_U-0p6_sol2.png" alt="A skip-like gait" width=300/>
+
+

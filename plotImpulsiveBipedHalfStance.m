@@ -88,36 +88,37 @@ for ii = 0:1
             end
         end
     end
-    x0 = X(1,1);
+    % initial and final positions
+    x0 = X(1,1); 
     y0 = X(1,2);
     xf = X(end,1);
     yf = X(end,2);
-    l0 = sqrt((x0-ii*D)^2 + y0^2);
-    lf = sqrt((xf-ii*D)^2 + yf^2);
+    l0 = sqrt((x0-ii*D)^2 + y0^2); % initial leg length
+    lf = sqrt((xf-ii*D)^2 + yf^2); % final leg length
+    % initial and final velocities
     v0 = X(1,4);
     [uf, vf] = deal(X(end,3),X(end,4));
     
-    
-
-    
-    
-    T_fl = -(v0 - Pn*y0/l0) + (vf + Pp*yf/lf);
+    T_fl = -(v0 - Pn*y0/l0) + (vf + Pp*yf/lf); % flight time
     t_fl = linspace(0,T_fl);
     x_fl = xf + (uf+Pp*(xf-ii*D)/lf)*t_fl;
     y_fl = yf + (vf+Pp*yf/lf)*t_fl - 1/2*t_fl.^2;
     plot(x_fl,y_fl,'k--')
 end
+% plot ground
+
 
 Work = 2*(o.result.objective-o.result.solution.phase.integral(2));
 
 yl = ylim;
-
 ylim([0 yl(2)])
-axis equal
-xlim([x0-D*1.1, x_fl(end)+D/10])
+axis equal % set equal axis ratio in x and y
+xl = [x0-D*1.1, x_fl(end)+D/10]; % x plotting limits
+xlim(xl)
+plot(xl,[0 0],'k-','linewidth',1)
 
-xlabel('Horizontal, Leg Lengths')
-ylabel('Vertical, Leg Lengths')
+xlabel('Horizontal Position [Leg Lengths]')
+ylabel('Vertical Position [Leg Lengths]')
 
 switch TextLocation
     case 'INSIDE'
