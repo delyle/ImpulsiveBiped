@@ -49,13 +49,15 @@ function [outFinal,out2,out1] = ImpulsiveBipedHalfStanceIterate(U,D,guess,auxFin
 
 
 if nargin < 4 
-    auxFinal = specAuxFinal;
+    auxFinal = struct; % create blank struct
     if nargin < 3
         guess = 'rand';
     end
 end
 auxFinal.U = U;
 auxFinal.D = D;
+% set defaults for necessary fields, if not provided
+auxFinal = addAuxDefaults(auxFinal);
 
 %% Iteration 1
 aux = auxFinal; % use most of the input values
@@ -64,23 +66,11 @@ aux.maxiterations = 1;
 out1 = ImpulsiveBipedHalfStance(aux,guess);
 
 %% Iteration 2
-% still uses one mesh iteration
+% still uses one mesh iteration and low smoothing
 out2 = ImpulsiveBipedHalfStance(aux,out1);
-
 
 %% Iteration 3
 aux.s = auxFinal.s;
 aux.maxiterations = auxFinal.maxiterations;
 outFinal = ImpulsiveBipedHalfStance(aux,out2);
-end
-
-function auxFinal = specAuxFinal()
-    auxFinal = struct;
-    auxFinal.s = 0.001;
-    auxFinal.Fdotmax = 100;
-    auxFinal.snopttol = 1e-7;
-    auxFinal.meshtol = 1e-5;
-    auxFinal.Tmin = 0.001;
-    auxFinal.Fmax = 10;
-    auxFinal.maxiterations = 10;
 end
