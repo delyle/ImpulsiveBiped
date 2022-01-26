@@ -101,6 +101,27 @@ end
 D = aux.D; 
 U = aux.U;
 
+% get defaults for auxdata
+fieldNames = fields(aux)';
+requiredFields = {'Fmax','Fdotmax','Tmin','s'};
+missingFields = setdiff(requiredFields,fieldNames);
+
+% set defaults
+for i = 1:length(missingFields)
+    currentField = missingFields{i};
+    switch currentField
+        case 'Fmax'
+            aux.(currentField) = 10;
+        case 'Tmin'
+            aux.(currentField) = 0.01;
+        case 'FdotMax'
+            aux.(currentField) = 100;
+        case 's'
+            aux.(currentField) = 0.001;
+    end
+    
+end
+
 %-------------------------------------------------------------------------%
 %----------------------- Setup for Problem Bounds ------------------------%
 %-------------------------------------------------------------------------%
