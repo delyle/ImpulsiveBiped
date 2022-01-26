@@ -101,26 +101,8 @@ end
 D = aux.D; 
 U = aux.U;
 
-% get defaults for auxdata
-fieldNames = fields(aux)';
-requiredFields = {'Fmax','Fdotmax','Tmin','s'};
-missingFields = setdiff(requiredFields,fieldNames);
-
-% set defaults
-for i = 1:length(missingFields)
-    currentField = missingFields{i};
-    switch currentField
-        case 'Fmax'
-            aux.(currentField) = 10;
-        case 'Tmin'
-            aux.(currentField) = 0.01;
-        case 'FdotMax'
-            aux.(currentField) = 100;
-        case 's'
-            aux.(currentField) = 0.001;
-    end
-    
-end
+% set defaults for necessary fields, if not provided
+aux = addAuxDefaults(aux);
 
 %-------------------------------------------------------------------------%
 %----------------------- Setup for Problem Bounds ------------------------%
@@ -222,14 +204,9 @@ end
 %----------Provide Mesh Refinement Method and Initial Mesh ---------------%
 %-------------------------------------------------------------------------%
 mesh.method       = 'hp-PattersonRao';
-mesh.tolerance    = 1e-7;
-if ~isfield(aux,'maxiterations')
-    aux.maxiterations = 10;
-end
 mesh.maxiterations = aux.maxiterations;
-if isfield(aux,'meshtol')
-    mesh.tolerance = aux.meshtol;
-end
+mesh.tolerance = aux.meshtol;
+
 mesh.colpointsmin = 4;
 mesh.colpointsmax = 10;
 
@@ -244,10 +221,8 @@ setup.bounds                      = bounds;
 setup.guess                       = guess;
 setup.mesh                        = mesh;
 setup.nlp.solver                  = 'snopt';
-setup.nlp.snoptoptions.maxiterations = 500;
-if isfield(aux,'snopttol')    
-    setup.nlp.snoptoptions.tolerance = aux.snopttol;
-end
+setup.nlp.snoptoptions.maxiterations = 500; 
+setup.nlp.snoptoptions.tolerance = aux.snopttol;
 setup.derivatives.supplier        = 'sparseCD';
 setup.derivatives.derivativelevel = 'first';
 setup.method                      = 'RPM-Integration';
